@@ -32,11 +32,10 @@ object CFGBuilder:
 
     val newCfgFs = List.from(builder.funcs)
     builder.funcs.prependAll(fromBuilder.funcs)
-    val totalCfgFs = List.from(builder.funcs)
-    val program = Program(totalCfgFs.map(_.irFunc), from.program.spec)
-    val cfg = CFG(
-      totalCfgFs,
-    )
+    val totalCfgFs = newCfgFs ::: from.funcs
+    val totalIRFs = newCfgFs.map(_.irFunc) ::: from.program.funcs
+    val program = Program(totalIRFs, from.program.spec)
+    val cfg = CFG(totalCfgFs)
 
     cfg.computeMain = (_) => from.main
     cfg.computeFuncMap = (_) =>
