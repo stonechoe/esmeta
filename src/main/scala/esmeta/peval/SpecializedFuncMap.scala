@@ -5,8 +5,8 @@ import esmeta.state.{State, Value}
 
 import scala.collection.immutable.HashMap
 
-case class SpecializedFuncs(
-  map: Map[String, (Iterable[Value], State) => Option[String]],
+class SpecializedFuncs(
+  val map: Map[String, (Iterable[Value], State) => Option[String]],
 ) {
   def getByArgs(
     funcName: String,
