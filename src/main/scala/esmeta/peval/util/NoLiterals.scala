@@ -50,20 +50,16 @@ class NoLiterals private () {
     val rightSideVars = {
       val walker = new RightSideVarWalker()
       walker.walk(inst)
-      println(s"rightSideVars: ${walker.yieldVars.mkString("{", ", ", "}")}")
       walker.yieldVars
     }
     def aux(inst: Inst): Inst = inst match
       case ILet(lhs, expr) =>
-        if (!rightSideVars.contains(lhs) && expr.isLiteral) then
-          println(s"pruning $inst")
-          ISeq(Nil)
+        if (!rightSideVars.contains(lhs) && expr.isLiteral) then ISeq(Nil)
         else inst
       case IAssign(ref, expr) =>
         ref match
           case Field(base, expr) => inst
           case x: Var if !rightSideVars.contains(x) && expr.isLiteral =>
-            println(s"pruning $inst")
             ISeq(Nil)
           case x: Var => inst
       case IExpand(base, expr)           => inst
