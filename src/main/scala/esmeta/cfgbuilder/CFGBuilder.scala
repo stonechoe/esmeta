@@ -56,8 +56,15 @@ object CFGBuilder:
 
     cfg.program = program
     cfg.sfMap = from.sfMap match
-      case None           => Some(sfMap)
-      case Some(oldSfMap) => Some(SpecializedFuncs(oldSfMap.map ++ sfMap.map))
+      case None => Some(sfMap)
+      case Some(oldSfMap) =>
+        Some(SpecializedFuncs((for {
+          k <- oldSfMap.map.keys ++ sfMap.map.keys
+        } yield {
+          val oldF = oldSfMap.map.getOrElse(k, PartialFunction.empty)
+          val newF = sfMap.map.getOrElse(k, PartialFunction.empty)
+          k -> newF.orElse(oldF)
+        }).toMap))
     cfg.cfgBuilder = Some(builder)
     cfg
   }

@@ -539,7 +539,7 @@ class PartialEvaluator(
 
       case IPrint(expr) =>
         val (_, newExpr) = peval(expr, pst);
-        val newInst = IAssert(newExpr);
+        val newInst = IPrint(newExpr);
         (newInst, pst)
 
       case iwhile @ IWhile(cond, body) =>
@@ -775,7 +775,15 @@ object PartialEvaluator {
               }
             fname <- overloadsMap.get(asts)
           } yield fname
-      SpecializedFuncs(Map(FUNC_DECL_INSTANT -> go))
+      // TODO : optimization ?
+      val newGo: PartialFunction[(Iterable[Value], State), String] = {
+        case (args: Iterable[Value], st: State) if (go(args, st).isDefined) =>
+          go(args, st).get
+      }
+
+      SpecializedFuncs(
+        Map(FUNC_DECL_INSTANT -> newGo),
+      )
     }
   }
 }

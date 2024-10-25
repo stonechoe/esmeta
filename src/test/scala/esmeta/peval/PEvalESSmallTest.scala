@@ -30,7 +30,7 @@ class PEvalESSmallTest extends PEvalTest {
 
         val overloads = decls.zipWithIndex.flatMap((fd, idx) =>
 
-          val (renamer, pst) =
+          val (renamer, pst, params, body) =
             PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
           val peval = PartialEvaluator(
@@ -47,7 +47,7 @@ class PEvalESSmallTest extends PEvalTest {
           ).map(_._1)
 
           pevalResult match
-            case Success(newFunc)   => Some((newFunc, fd))
+            case Success(newFunc)   => Some((newFunc, params, body))
             case Failure(exception) => fail(s"peval failed for FDI"), // None
         )
 
