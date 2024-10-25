@@ -1,16 +1,16 @@
-// package esmeta.peval.util
+package esmeta.peval.util
 
-// import esmeta.cfg.{Block, Branch, Call, Node}
-// import esmeta.cfgBuilder.CFGBuilder
-// import esmeta.ir.*
-// import esmeta.ir.util.*
-// import esmeta.util.BaseUtils.cached
+import esmeta.cfg.{Block, Branch, Call, Node}
+import esmeta.cfgBuilder.CFGBuilder
+import esmeta.ir.*
+import esmeta.ir.util.*
+import esmeta.util.BaseUtils.cached
 
-// import scala.annotation.tailrec
-// import scala.collection.mutable.{Set as MSet, Map as MMap}
+import scala.annotation.tailrec
+import scala.collection.mutable.{Set as MSet, Map as MMap}
 
-// /** WIP */
-// class UseDef(func: Func) {
+/** WIP */
+class UseDef(func: Func) {
 //   import UseDef.*
 
 //   lazy val cfg = CFGBuilder(Program(List(func)), log = false)
@@ -62,8 +62,8 @@
 //     Map.from(inOut)
 //   }
 
-// }
+}
 
-// object UseDef {
-//   type InstCoordinate = (Int, Option[Int])
-// }
+object UseDef {
+  type InstCoordinate = (Int, Option[Int])
+}
