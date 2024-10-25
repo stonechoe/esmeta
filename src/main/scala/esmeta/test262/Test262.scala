@@ -21,6 +21,7 @@ import esmeta.peval.FUNC_DECL_INSTANT
 import esmeta.peval.PartialEvaluator
 import scala.util.{Try, Success, Failure}
 import esmeta.cfgBuilder.CFGBuilder
+import cats.conversions.all
 
 /** data in Test262 */
 case class Test262(
@@ -46,6 +47,47 @@ case class Test262(
 
   /** basic harness files */
   lazy val basicHarness = getHarness("assert.js")() ++ getHarness("sta.js")()
+
+  lazy val allHarness = (for {
+    file <- walkTree(s"$TEST262_TEST_DIR/harness")
+    if file.isFile
+    harness <- parseFile(file.toString).flattenStmt
+  } yield harness)
+
+  lazy val cfgWithPEvaledHarness =
+    val allDecls = for {
+      harness <- allHarness
+      decl <- AstHelper.getFuncDecls(harness)
+    } yield decl
+    {
+      val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
+      val overloads = allDecls.zipWithIndex.map {
+        case (fd, idx) =>
+          val (renamer, pst) =
+            PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
+
+          val peval = PartialEvaluator(
+            program = cfg.program,
+            renamer = renamer,
+            simplifyLevel = 2,
+          )
+
+          val pevalResult = Try(
+            peval.run(target, pst, Some(s"${target.name}PEvaled${idx}")),
+          ).map(_._1)
+
+          pevalResult match
+            case Success(newFunc)   => (newFunc, fd)
+            case Failure(exception) => throw exception
+      }.toList
+      val sfMap =
+        PartialEvaluator.ForECMAScript.genMap(overloads)
+      val newCfg =
+        CFGBuilder
+          .byIncremental(cfg, overloads.map(_._1), sfMap)
+          .getOrElse(???) // Cfg incremental build fail
+      newCfg
+    }
 
   /** specification */
   val spec = cfg.spec
@@ -277,8 +319,13 @@ case class Test262(
                   simplifyLevel = 2,
                 )
 
+                // Ad-hoc fix : add 2048 to idx to avoid name conflict (it is okay to have conflict, its just shadowed - but performance drops)
                 val pevalResult = Try(
-                  peval.run(target, pst, Some(s"${target.name}PEvaled${idx}")),
+                  peval.run(
+                    target,
+                    pst,
+                    Some(s"${target.name}PEvaled${idx + 2048}"),
+                  ),
                 ).map(_._1)
 
                 pevalResult match
@@ -290,7 +337,11 @@ case class Test262(
               PartialEvaluator.ForECMAScript.genMap(overloads)
             val newCfg =
               CFGBuilder
-                .byIncremental(cfg, overloads.map(_._1), sfMap)
+                .byIncremental(
+                  cfgWithPEvaledHarness,
+                  overloads.map(_._1),
+                  sfMap,
+                )
                 .getOrElse(???) // Cfg incremental build fail
 
             Initialize(newCfg, code, Some(ast), Some(filename))
