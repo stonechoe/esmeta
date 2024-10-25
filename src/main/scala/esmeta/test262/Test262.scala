@@ -52,16 +52,21 @@ case class Test262(
 
   /** load test262 */
   def loadTest(filename: String): Ast =
+    loadTest(filename, Test(filename).includes)._1
+
+  /** load test262 */
+  def loadTestAndAst(filename: String): (Ast, Ast) =
     loadTest(filename, Test(filename).includes)
 
   /** load test262 with harness files */
-  def loadTest(filename: String, includes: List[String]): Ast =
+  def loadTest(filename: String, includes: List[String]): (Ast, Ast) =
     // load harness
     val harnessStmts = includes.foldLeft(basicHarness)(_ ++ getHarness(_)())
 
     // merge with harnesses
-    val stmts = flattenStmt(parseFile(filename))
-    mergeStmt(harnessStmts ++ stmts)
+    val fileAst = parseFile(filename)
+    val stmts = flattenStmt(fileAst)
+    (mergeStmt(harnessStmts ++ stmts), fileAst)
 
   /** get tests */
   def getTests(
@@ -251,14 +256,14 @@ case class Test262(
     timeLimit: Option[Int] = None,
     peval: Boolean = false,
   ): State =
-    val ast = loadTest(filename)
+    val (ast, fileAst) = loadTestAndAst(filename)
     val code = ast.toString(grammar = Some(cfg.grammar)).trim
     val st =
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
       if (!peval) then defaultSetting
       else {
-        AstHelper.getFuncDecls(ast) match
+        AstHelper.getFuncDecls(fileAst) match
           case Nil => defaultSetting
           case decls =>
             val overloads = decls.zipWithIndex.map {
@@ -269,6 +274,7 @@ case class Test262(
                 val peval = PartialEvaluator(
                   program = cfg.program,
                   renamer = renamer,
+                  simplifyLevel = 2,
                 )
 
                 val pevalResult = Try(
