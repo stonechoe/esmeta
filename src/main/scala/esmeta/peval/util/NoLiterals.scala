@@ -5,11 +5,8 @@ import esmeta.ir.util.{UnitWalker}
 import scala.collection.mutable.{Set as MSet}
 import esmeta.compiler.TyCompiler.walk
 
-/** Remove all literals from the instruction tree. This is useful for testing
-  * purposes, as it allows to compare the structure of two instruction trees
-  * without having to worry about the actual values of the literals.
-  */
-class NoLiterals private () {
+/** Remove unused definitions from the program, using syntactic approach */
+class RemoveUnusedDef private () {
 
   self =>
   private class RightSideVarWalker() extends UnitWalker {
@@ -54,14 +51,12 @@ class NoLiterals private () {
     }
     def aux(inst: Inst): Inst = inst match
       case ILet(lhs, expr) =>
-        if (!rightSideVars.contains(lhs) && expr.isLiteral) then ISeq(Nil)
+        if (!rightSideVars.contains(lhs)) then ISeq(Nil)
         else inst
       case IAssign(ref, expr) =>
         ref match
-          case Field(base, expr) => inst
-          case x: Var if !rightSideVars.contains(x) && expr.isLiteral =>
-            ISeq(Nil)
-          case x: Var => inst
+          case _ if ref.isPure => ISeq(Nil)
+          case _               => inst
       case IExpand(base, expr)           => inst
       case IDelete(base, expr)           => inst
       case IPush(elem, list, front)      => inst
@@ -78,6 +73,6 @@ class NoLiterals private () {
 
 }
 
-object NoLiterals {
-  def apply(inst: Inst): Inst = new NoLiterals().prune(inst)
+object RemoveUnusedDef {
+  def apply(inst: Inst): Inst = new RemoveUnusedDef().prune(inst)
 }

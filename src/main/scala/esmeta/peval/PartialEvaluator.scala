@@ -595,7 +595,7 @@ class PartialEvaluator(
       val simplifiedNewBody = simplifyLevel match
         case 0 => newBody
         case 1 => InstFlattener(newBody)
-        case 2 => InstFlattener(NoLiterals(newBody))
+        case 2 => InstFlattener(RemoveUnusedDef(newBody))
         case 3 => ??? // InstFlattener(NoLiterals(newBody)) // TODO
 
       (
@@ -774,6 +774,7 @@ object PartialEvaluator {
                 case _                            => None
               }
             fname <- overloadsMap.get(asts)
+            () = println(s"found : $fname")
           } yield fname
       // TODO : optimization ?
       val newGo: PartialFunction[(Iterable[Value], State), String] = {
