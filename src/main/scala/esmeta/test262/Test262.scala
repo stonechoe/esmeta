@@ -305,46 +305,47 @@ case class Test262(
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
       if (!peval) then defaultSetting
       else {
-        AstHelper.getFuncDecls(fileAst) match
-          case Nil => defaultSetting
-          case decls =>
-            val overloads = decls.zipWithIndex.map {
-              case (fd, idx) =>
-                val (renamer, pst, params, funcBody) =
-                  PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
+        Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
+        //   AstHelper.getFuncDecls(fileAst) match
+        //     case Nil => defaultSetting
+        //     case decls =>
+        //       val overloads = decls.zipWithIndex.map {
+        //         case (fd, idx) =>
+        //           val (renamer, pst, params, funcBody) =
+        //             PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
-                val peval = PartialEvaluator(
-                  program = cfg.program,
-                  renamer = renamer,
-                  simplifyLevel = 2,
-                )
+        //           val peval = PartialEvaluator(
+        //             program = cfg.program,
+        //             renamer = renamer,
+        //             simplifyLevel = 2,
+        //           )
 
-                // Ad-hoc fix : add 2048 to idx to avoid name conflict (it is okay to have conflict, its just shadowed - but performance drops)
-                val pevalResult = Try(
-                  peval.run(
-                    target,
-                    pst,
-                    Some(s"${target.name}PEvaled${idx + 2048}"),
-                  ),
-                ).map(_._1)
+        //           // Ad-hoc fix : add 2048 to idx to avoid name conflict (it is okay to have conflict, its just shadowed - but performance drops)
+        //           val pevalResult = Try(
+        //             peval.run(
+        //               target,
+        //               pst,
+        //               Some(s"${target.name}PEvaled${idx + 2048}"),
+        //             ),
+        //           ).map(_._1)
 
-                pevalResult match
-                  case Success(newFunc)   => (newFunc, params, funcBody)
-                  case Failure(exception) => throw exception
-            }
+        //           pevalResult match
+        //             case Success(newFunc)   => (newFunc, params, funcBody)
+        //             case Failure(exception) => throw exception
+        //       }
 
-            val sfMap =
-              PartialEvaluator.ForECMAScript.genMap(overloads)
-            val newCfg =
-              CFGBuilder
-                .byIncremental(
-                  cfgWithPEvaledHarness,
-                  overloads.map(_._1),
-                  sfMap,
-                )
-                .getOrElse(???) // Cfg incremental build fail
+        //       val sfMap =
+        //         PartialEvaluator.ForECMAScript.genMap(overloads)
+        //       val newCfg =
+        //         CFGBuilder
+        //           .byIncremental(
+        //             cfgWithPEvaledHarness,
+        //             overloads.map(_._1),
+        //             sfMap,
+        //           )
+        //           .getOrElse(???) // Cfg incremental build fail
 
-            Initialize(newCfg, code, Some(ast), Some(filename))
+        //       Initialize(newCfg, code, Some(ast), Some(filename))
       }
     Interpreter(
       st = st,
