@@ -774,7 +774,6 @@ object PartialEvaluator {
                 case _                            => None
               }
             fname <- overloadsMap.get(asts)
-            () = println(s"found : $fname")
           } yield fname
       // TODO : optimization ?
       val newGo: PartialFunction[(Iterable[Value], State), String] = {
