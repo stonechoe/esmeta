@@ -63,7 +63,7 @@ case object PEval extends Phase[Program, Program] {
 
     val overloads = fds.zipWithIndex.flatMap((fd, idx) =>
 
-      val (renamer, pst) =
+      val (renamer, pst, params, funcBody) =
         PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
       val peval = PartialEvaluator(
@@ -83,7 +83,7 @@ case object PEval extends Phase[Program, Program] {
       ).map(_._1)
 
       pevalResult match
-        case Success(newFunc) => Some((newFunc, fd))
+        case Success(newFunc) => Some((newFunc, params, funcBody))
         case Failure(exception) =>
           print("Failed to run PEval: ")
           exception.printStackTrace();

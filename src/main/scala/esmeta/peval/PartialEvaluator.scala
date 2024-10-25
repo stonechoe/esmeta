@@ -705,7 +705,7 @@ object PartialEvaluator {
       * @param esFuncDecl
       *   es function declaration to use as an argument.
       * @return
-      *   (renamer, pst)
+      *   (renamer, pst, params: AstValue, funcBody : AstValue)
       */
     def prepareForFDI(func: Func, esFuncDecl: Ast) = {
 
@@ -719,16 +719,15 @@ object PartialEvaluator {
 
       val addr_func_obj_record = renamer.newAddr
 
+      val params = AstValue(AstHelper.getChildByName(esFuncDecl, FORMAL_PARAMS))
+      val funcBody = AstValue(AstHelper.getChildByName(esFuncDecl, FUNC_BODY))
+
       pst.allocRecord(
         addr_func_obj_record,
         "ECMAScriptFunctionObject",
         List(
-          FORMAL_PARAMS -> Known(
-            AstValue(AstHelper.getChildByName(esFuncDecl, FORMAL_PARAMS)),
-          ),
-          ECMASCRIPT_CODE -> Known(
-            AstValue(AstHelper.getChildByName(esFuncDecl, FUNC_BODY)),
-          ),
+          FORMAL_PARAMS -> Known(params),
+          ECMASCRIPT_CODE -> Known(funcBody),
           "ThisMode" -> Unknown, // Known(ENUM_STRICT),
           "Strict" -> Unknown, // Known(Bool(true)), // ESMeta is always strict
         ),
@@ -743,33 +742,16 @@ object PartialEvaluator {
         Unknown,
       );
 
-      (renamer, pst)
+      (renamer, pst, params, funcBody)
     }
 
     def genMap(
-      overloads: List[(Func, Ast)],
+      overloadsWithParamsAndBody: List[(Func, AstValue, AstValue)],
     ): SpecializedFuncs = {
 
       // TODO : optimize finding matching overloads
       val overloadsMap = {
-        val astOfOverloads = overloads.map {
-          case (func, decl) => {
-            val formalParamsOfDecl =
-              AstHelper
-                .getAllChildrenByName(decl, FORMAL_PARAMS)
-                .headOption
-                .map(AstValue.apply)
-                .getOrElse(throwPeval"formalParams not found")
-            val ecmaScriptCodeOfDecl =
-              AstHelper
-                .getAllChildrenByName(decl, FUNC_BODY)
-                .headOption
-                .map(AstValue.apply)
-                .getOrElse(throwPeval"ecmaScriptCode not found")
-            (func, formalParamsOfDecl, ecmaScriptCodeOfDecl)
-          }
-        }
-        HashMap.from(astOfOverloads.map {
+        HashMap.from(overloadsWithParamsAndBody.map {
           case (ol, fpOfDecl, escOfDecl) => (fpOfDecl, escOfDecl) -> ol.name
         })
       }

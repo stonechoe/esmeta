@@ -55,7 +55,9 @@ object CFGBuilder:
       } yield node -> func)
 
     cfg.program = program
-    cfg.sfMap = Some(sfMap)
+    cfg.sfMap = from.sfMap match
+      case None           => Some(sfMap)
+      case Some(oldSfMap) => Some(SpecializedFuncs(oldSfMap.map ++ sfMap.map))
     cfg.cfgBuilder = Some(builder)
     cfg
   }

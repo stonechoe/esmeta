@@ -63,7 +63,7 @@ case class Test262(
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       val overloads = allDecls.zipWithIndex.map {
         case (fd, idx) =>
-          val (renamer, pst) =
+          val (renamer, pst, params, funcBody) =
             PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
           val peval = PartialEvaluator(
@@ -77,7 +77,7 @@ case class Test262(
           ).map(_._1)
 
           pevalResult match
-            case Success(newFunc)   => (newFunc, fd)
+            case Success(newFunc)   => (newFunc, params, funcBody)
             case Failure(exception) => throw exception
       }.toList
       val sfMap =
@@ -310,7 +310,7 @@ case class Test262(
           case decls =>
             val overloads = decls.zipWithIndex.map {
               case (fd, idx) =>
-                val (renamer, pst) =
+                val (renamer, pst, params, funcBody) =
                   PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
                 val peval = PartialEvaluator(
@@ -329,7 +329,7 @@ case class Test262(
                 ).map(_._1)
 
                 pevalResult match
-                  case Success(newFunc)   => (newFunc, fd)
+                  case Success(newFunc)   => (newFunc, params, funcBody)
                   case Failure(exception) => throw exception
             }
 
