@@ -15,6 +15,7 @@ class RemoveUnusedDef private () {
 
     def yieldVars: Set[Var] = Set.from(vars)
     override def walk(x: Var): Unit = vars += x
+
     override def walk(ref: Ref): Unit = ref match
       case Field(base, expr) => walk(base); walk(expr)
       case rest: Var         => vars += rest
@@ -47,6 +48,8 @@ class RemoveUnusedDef private () {
     val rightSideVars = {
       val walker = new RightSideVarWalker()
       walker.walk(inst)
+      print("yieldVars: ")
+      println(walker.yieldVars);
       walker.yieldVars
     }
     def aux(inst: Inst): Inst = inst match
@@ -55,8 +58,9 @@ class RemoveUnusedDef private () {
         else inst
       case IAssign(ref, expr) =>
         ref match
-          case _ if ref.isPure => ISeq(Nil)
-          case _               => inst
+          // v :Var means ref.isPure == true
+          case v: Var if (!rightSideVars.contains(v)) => ISeq(Nil)
+          case _                                      => inst
       case IExpand(base, expr)           => inst
       case IDelete(base, expr)           => inst
       case IPush(elem, list, front)      => inst
