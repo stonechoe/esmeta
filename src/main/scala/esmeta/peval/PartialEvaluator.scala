@@ -1,6 +1,6 @@
 package esmeta.peval
 
-import esmeta.{PEVAL_LOG_DIR, LINE_SEP}
+import esmeta.{LINE_SEP, PEVAL_LOG_DIR, TEST_MODE}
 import esmeta.analyzer.*
 import esmeta.cfg.{Func as CFGFunc}
 import esmeta.error.*
@@ -11,13 +11,12 @@ import esmeta.ir.*
 import esmeta.es.*
 import esmeta.parser.{ESParser, ESValueParser}
 import esmeta.peval.pstate.*
-import esmeta.peval.util.*
 import esmeta.peval.simplifier.*
+import esmeta.peval.util.*
 import esmeta.state.{BigInt, *}
 import esmeta.spec.{Spec}
 import esmeta.util.BaseUtils.{error => _, *}
 import esmeta.util.SystemUtils.*
-import esmeta.TEST_MODE
 import java.io.PrintWriter
 import java.math.MathContext.DECIMAL128
 import scala.annotation.tailrec
@@ -707,7 +706,10 @@ object PartialEvaluator {
       * @return
       *   (renamer, pst, params: AstValue, funcBody : AstValue)
       */
-    def prepareForFDI(func: Func, esFuncDecl: Ast) = {
+    def prepareForFDI(
+      func: Func,
+      esFuncDecl: ESHelper.ESFuncAst,
+    ) = {
 
       if (func.name != FUNC_DECL_INSTANT) {
         throw PartialEvaluatorError(
@@ -719,18 +721,10 @@ object PartialEvaluator {
 
       val addr_func_obj_record = renamer.newAddr
 
-      val params = AstValue(AstHelper.getChildByName(esFuncDecl, FORMAL_PARAMS))
-      val funcBody = AstValue(AstHelper.getChildByName(esFuncDecl, FUNC_BODY))
-
       pst.allocRecord(
         addr_func_obj_record,
         "ECMAScriptFunctionObject",
-        List(
-          FORMAL_PARAMS -> Known(params),
-          ECMASCRIPT_CODE -> Known(funcBody),
-          "ThisMode" -> Unknown, // Known(ENUM_STRICT),
-          "Strict" -> Unknown, // Known(Bool(true)), // ESMeta is always strict
-        ),
+        esFuncDecl.toRecordEntries,
       )
 
       pst.define(
@@ -742,17 +736,18 @@ object PartialEvaluator {
         Unknown,
       );
 
-      (renamer, pst, params, funcBody)
+      (renamer, pst)
     }
 
     def genMap(
-      overloadsWithParamsAndBody: List[(Func, AstValue, AstValue)],
+      overloadsWithParamsAndBody: List[(Func, ESHelper.ESFuncAst)],
     ): SpecializedFuncs = {
 
       // TODO : optimize finding matching overloads
       val overloadsMap = {
         HashMap.from(overloadsWithParamsAndBody.map {
-          case (ol, fpOfDecl, escOfDecl) => (fpOfDecl, escOfDecl) -> ol.name
+          case (ol, fa) =>
+            (AstValue(fa.params), AstValue(fa.funcBody)) -> ol.name
         })
       }
 
@@ -767,8 +762,8 @@ object PartialEvaluator {
               case r: RecordObj => Some(r)
               case _            => None
             asts <- record
-              .get(Str(FORMAL_PARAMS))
-              .zip(record.get(Str(ECMASCRIPT_CODE)))
+              .get(Str(ESHelper.FORMAL_PARAMS))
+              .zip(record.get(Str(ESHelper.ECMASCRIPT_CODE)))
               .flatMap {
                 case (v1: AstValue, v2: AstValue) => Some((v1, v2))
                 case _                            => None

@@ -57,13 +57,13 @@ case class Test262(
   lazy val cfgWithPEvaledHarness =
     val allDecls = for {
       harness <- allHarness
-      decl <- AstHelper.getFuncDecls(harness)
+      decl <- AstHelper.getPEvalTargetAsts(harness)
     } yield decl
     {
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       val overloads = allDecls.zipWithIndex.map {
         case (fd, idx) =>
-          val (renamer, pst, params, funcBody) =
+          val (renamer, pst) =
             PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
           val peval = PartialEvaluator(
@@ -77,7 +77,8 @@ case class Test262(
           ).map(_._1)
 
           pevalResult match
-            case Success(newFunc)   => (newFunc, params, funcBody)
+            case Success(newFunc) =>
+              (newFunc, fd)
             case Failure(exception) => throw exception
       }.toList
       val sfMap =
@@ -305,12 +306,12 @@ case class Test262(
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
       if (!peval) then defaultSetting
       else {
-        AstHelper.getFuncDecls(fileAst) match
+        AstHelper.getPEvalTargetAsts(fileAst) match
           case Nil => defaultSetting
           case decls =>
             val overloads = decls.zipWithIndex.map {
               case (fd, idx) =>
-                val (renamer, pst, params, funcBody) =
+                val (renamer, pst) =
                   PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
                 val peval = PartialEvaluator(
@@ -329,7 +330,7 @@ case class Test262(
                 ).map(_._1)
 
                 pevalResult match
-                  case Success(newFunc)   => (newFunc, params, funcBody)
+                  case Success(newFunc)   => (newFunc, fd)
                   case Failure(exception) => throw exception
             }
 
@@ -344,13 +345,7 @@ case class Test262(
                 )
                 .getOrElse(???) // Cfg incremental build fail
 
-            // ad-hoc (to compare)
-            val _ = cfgWithPEvaledHarness; // just eval
-            val _ = allHarness; // just eval
-            Initialize(cfg, code, Some(ast), Some(filename))
-        // ad-hoc end
-
-        // Initialize(newCfg, code, Some(ast), Some(filename))
+            Initialize(newCfg, code, Some(ast), Some(filename))
       }
     Interpreter(
       st = st,

@@ -2,28 +2,48 @@ package esmeta.peval.util
 
 import esmeta.error.{InvalidAstField, PartialEvaluatorError}
 import esmeta.es.{Ast, Lexical, Syntactic}
+import esmeta.es.util.{UnitWalker as AstUnitWalker}
 import esmeta.ir.{Expr}
-import esmeta.peval.{FUNC_DECL}
+import esmeta.peval.util.{ESHelper}
 import esmeta.state.{Str}
-import scala.collection.immutable.Range.Partial
-import esmeta.peval.PartialEvaluator
+
+// TODO : sort imports
+import scala.collection.mutable.ListBuffer
+import esmeta.peval.Unknown.get
 
 object AstHelper {
+
+  private class AstFinder(names: Set[String]) extends AstUnitWalker {
+    val asts = ListBuffer.empty[Ast]
+    def getAst: List[Ast] = asts.toList
+    override def walk(lex: Lexical) =
+      if names.contains(lex.name) then lex +=: asts
+    override def walk(syn: Syntactic) =
+      super.walk(syn)
+      if names.contains(syn.name) then syn +=: asts
+  }
+
   val getChildByName = (ast: Ast, name: String) =>
     getAllChildrenByName(ast, name).headOption.getOrElse(
       throw InvalidAstField(ast, Str(name)),
     )
 
-  val getFuncDecls = (ast: Ast) => getAllChildrenByName(ast, FUNC_DECL)
+  val getPEvalTargetAsts = (rootAst: Ast) =>
+    import ESHelper.*
+    // XXX : edit this to get all function declarations
+    val asts = getAllChildrenByNames(rootAst, Set(ESHelper.FUNC_DECL))
+    asts.map((decl) => ESFuncAst.from(decl))
+
+  val getFuncDeclLikes = (ast: Ast) =>
+    getAllChildrenByNames(ast, ESHelper.FuncLikes.valueSet)
 
   def getAllChildrenByName(ast: Ast, name: String): List[Ast] =
-    val fromChildren = for {
-      childOpt <- ast.children
-      child <- childOpt
-      result = getAllChildrenByName(child, name)
-    } yield result
-    val fromThis = if (ast.name == name) then List(ast) else Nil
-    fromThis ::: fromChildren.flatten
+    getAllChildrenByNames(ast, Set(name))
+
+  def getAllChildrenByNames(ast: Ast, names: Set[String]): List[Ast] =
+    val astFinder = new AstFinder(names)
+    astFinder.walk(ast)
+    astFinder.getAst
 
   /** auxilaray function for partial evaluators Sdo call
     *

@@ -49,7 +49,7 @@ case object PEval extends Phase[Program, Program] {
     val filename = getFirstFilename(cmdConfig, name)
     val fds = {
       val ast = program.spec.scriptParser.fromFile(filename)
-      AstHelper.getFuncDecls(ast)
+      AstHelper.getPEvalTargetAsts(ast)
     }
 
     /* NOTE: globals are not modified, so we can use the same globals for all overloads
@@ -63,7 +63,7 @@ case object PEval extends Phase[Program, Program] {
 
     val overloads = fds.zipWithIndex.flatMap((fd, idx) =>
 
-      val (renamer, pst, params, funcBody) =
+      val (renamer, pst) =
         PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
       val peval = PartialEvaluator(
@@ -83,7 +83,8 @@ case object PEval extends Phase[Program, Program] {
       ).map(_._1)
 
       pevalResult match
-        case Success(newFunc) => Some((newFunc, params, funcBody))
+        case Success(newFunc) =>
+          Some((newFunc, fd))
         case Failure(exception) =>
           print("Failed to run PEval: ")
           exception.printStackTrace();
