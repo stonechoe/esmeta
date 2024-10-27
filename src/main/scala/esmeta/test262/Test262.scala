@@ -221,6 +221,7 @@ case class Test262(
           else cov.run(filename)
         val returnValue = st(GLOBAL_RESULT)
         if (returnValue != Undef) throw InvalidExit(returnValue)
+        st(GLOBAL_RESULT_ITER_COUNT)
       ,
       // dump coverage
       logDir => if (useCoverage) cov.dumpTo(logDir),
@@ -333,6 +334,15 @@ case class Test262(
                   case Failure(exception) => throw exception
             }
 
+            if (log) then
+              for ((f, _) <- overloads) {
+                val pevalPw = getPrintWriter(
+                  s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
+                )
+                pevalPw.println(f)
+                pevalPw.close
+              }
+
             val sfMap =
               PartialEvaluator.ForECMAScript.genMap(overloads)
             // 'cfgWithPEvaledHarness' is computed
@@ -359,14 +369,14 @@ case class Test262(
     )
 
   // logging mode for tests
-  private def logForTests(
+  private def logForTests[T](
     name: String,
     progressBar: ProgressBar[Test],
     pw: PrintWriter,
     postSummary: => String = "",
     log: Boolean = false,
   )(
-    check: Test => Unit,
+    check: Test => T,
     postJob: String => Unit = _ => {},
   ): Unit =
     val summary: Summary = progressBar.summary
@@ -388,5 +398,15 @@ case class Test262(
         if (postSummary.isEmpty) s"$summary"
         else s"$summary$LINE_SEP$postSummary"
       dumpFile(s"Test262 $name test summary", summaryStr, s"$logDir/summary")
+
+      // ad-hoc logging for iteration count
+      val meanIterCount =
+        import scala.math.BigInt
+        (for {
+          (reason, _) <- summary.pass.map
+          iter = BigInt(reason.toLong)
+        } yield iter).sum / summary.pass.size
+      dumpFile(meanIterCount, s"$logDir/mean-iteration-count-summary")
+
 }
 object Test262 extends Git(TEST262_DIR)
