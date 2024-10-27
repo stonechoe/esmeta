@@ -430,14 +430,17 @@ case class Test262(
       dumpFile(s"Test262 $name test summary", summaryStr, s"$logDir/summary")
 
       // ad-hoc logging for iteration count
-      val meanIterCount =
+      val (totalIterCount, meanIterCount) =
         import scala.math.BigInt
         val iters = (for {
           (reason, _) <- summary.pass.flat
           iter = BigInt(reason.mkString("").toLong)
         } yield iter)
-        iters.sum / iters.size
-      dumpFile(meanIterCount, s"$logDir/mean-iteration-count-summary")
+        (iters.sum, iters.sum / iters.size)
+      dumpFile(
+        s"total: $totalIterCount\nmean:$meanIterCount",
+        s"$logDir/iteration-count-summary",
+      )
 
       dumpFile(
         ESMeta.GIVEN_COMMAND.getOrElse("<unknown command>"),
