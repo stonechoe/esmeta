@@ -425,5 +425,10 @@ case class Test262(
         } yield iter).sum / summary.pass.size
       dumpFile(meanIterCount, s"$logDir/mean-iteration-count-summary")
 
+      dumpFile(
+        ESMeta.GIVEN_COMMAND.getOrElse("<unknown command>"),
+        s"$logDir/command",
+      )
+
 }
 object Test262 extends Git(TEST262_DIR)
