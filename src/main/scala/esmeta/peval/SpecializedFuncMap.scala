@@ -14,7 +14,6 @@ class SpecializedFuncs(
     st: State,
   ): Option[String] =
     map.get(funcName).flatMap(_.lift(args, st))
-
 }
 
 object SpecializedFuncs {

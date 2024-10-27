@@ -79,6 +79,17 @@ case class Test262(
               (newFunc, fd)
             case Failure(exception) => throw exception
       }.toList
+
+      // why no log option ???
+      if (true) then
+        for ((f, _) <- overloads) {
+          val pevalPw = getPrintWriter(
+            s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
+          )
+          pevalPw.println(f)
+          pevalPw.close
+        }
+
       val sfMap =
         PartialEvaluator.ForECMAScript.genMap(overloads)
       val newCfg =
@@ -364,7 +375,9 @@ case class Test262(
           val newCfg =
             CFGBuilder
               .byIncremental(
-                if (peval.shouldUseHarness) then cfgWithPEvaledHarness
+                if (peval.shouldUseHarness) then
+                  println("we got here")
+                  cfgWithPEvaledHarness
                 else cfg,
                 overloads.map(_._1),
                 sfMap,

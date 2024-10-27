@@ -2,7 +2,7 @@ package esmeta.peval.util
 
 import esmeta.error.PartialEvaluatorError
 
-private object ESModels {
+object ESModels {
 
   /* name of ast which can call OrdinaryFunctionCreate */
   lazy val FUNC_DECL = "FunctionDeclaration"
@@ -38,6 +38,22 @@ private object ESModels {
       case AsyncFuncDecl    => ASYNC_FUNC_DECL
       case AsyncFuncExpr    => ASYNC_FUNC_EXPR
       case AsyncArrowFunc   => ASYNC_ARROW_FUNC
+
+    def paramAstName = this match
+      case FuncDecl         => "FormalParameters" -> "FunctionBody"
+      case FuncExpr         => "FormalParameters" -> "FunctionBody"
+      case ArrowFunc        => ??? // "ArrowParameters" -> "ConciseBody"
+      case MethodDef        => ??? // "UniqueFormalParameters" -> "FunctionBody"
+      case GenDecl          => ???
+      case GenExpr          => ???
+      case AsyncGenDecl     => ???
+      case AsyncGenExpr     => ???
+      case ClassFieldDef    => ???
+      case ClassStaticBlock => ???
+      case AsyncFuncDecl    => ???
+      case AsyncFuncExpr    => ???
+      case AsyncArrowFunc   => ???
+
   }
 
   object FuncLikes {
@@ -62,7 +78,7 @@ private object ESModels {
 
 }
 
-private object ESFuncModeling {
+object ESFuncModeling {
 
   import esmeta.es.Ast
   import esmeta.state.{AstValue, Bool, Enum, Value}
@@ -70,8 +86,9 @@ private object ESFuncModeling {
   import ESModels.*
 
   lazy val FORMAL_PARAMS = "FormalParameters"
-  lazy val FUNC_BODY = "FunctionBody"
   lazy val ECMASCRIPT_CODE = "ECMAScriptCode"
+
+  lazy val FUNC_BODY = "FunctionBody"
 
   case class ESFuncAst(
     params: Ast,

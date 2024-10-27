@@ -145,10 +145,13 @@ class Interpreter(
           val vs = args.map(eval)
           val targetFunc =
             if (useOverload) then
+              println(s"cfg.sfMap: ${cfg.sfMap.get.map.values}")
               (for {
                 oName <- cfg.sfMap.flatMap(_.getByArgs(func.name, vs, st))
+                () = println(s"found $"oName");
                 newFunc = cfg.getFunc(oName);
                 () = if (log) then
+                  println(s"found $"oName");
                   pw.println(
                     s"[Interpreter] overloaded ${func.name} ~> ${oName}",
                   )

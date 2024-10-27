@@ -773,8 +773,11 @@ object PartialEvaluator {
       // TODO : optimization ?
       val newGo: PartialFunction[(Iterable[Value], State), String] = {
         case (args: Iterable[Value], st: State) if (go(args, st).isDefined) =>
+          println("found something");
           go(args, st).get
       }
+
+      println(s"created genMap for ${overloadsMap.size} overloads");
 
       SpecializedFuncs(
         Map(FUNC_DECL_INSTANT -> newGo),
