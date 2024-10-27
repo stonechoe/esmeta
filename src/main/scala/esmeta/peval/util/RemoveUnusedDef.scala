@@ -48,8 +48,6 @@ class RemoveUnusedDef private () {
     val rightSideVars = {
       val walker = new RightSideVarWalker()
       walker.walk(inst)
-      print("yieldVars: ")
-      println(walker.yieldVars);
       walker.yieldVars
     }
     def aux(inst: Inst): Inst = inst match
