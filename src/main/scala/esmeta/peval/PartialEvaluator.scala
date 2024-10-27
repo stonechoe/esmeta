@@ -740,16 +740,14 @@ object PartialEvaluator {
     }
 
     def genMap(
-      overloadsWithParamsAndBody: List[(Func, ESHelper.ESFuncAst)],
+      overloads: List[(Func, ESHelper.ESFuncAst)],
     ): SpecializedFuncs = {
 
       // TODO : optimize finding matching overloads
-      val overloadsMap = {
-        HashMap.from(overloadsWithParamsAndBody.map {
-          case (ol, fa) =>
-            (AstValue(fa.params), AstValue(fa.funcBody)) -> ol.name
-        })
-      }
+      val overloadsMap = Map.from(overloads.map {
+        case (ol, fa) =>
+          (AstValue(fa.params), AstValue(fa.funcBody)) -> ol.name
+      })
 
       val go =
         (args: Iterable[Value], st: State) =>
@@ -773,12 +771,8 @@ object PartialEvaluator {
       // TODO : optimization ?
       val newGo: PartialFunction[(Iterable[Value], State), String] = {
         case (args: Iterable[Value], st: State) if (go(args, st).isDefined) =>
-          println("found something");
           go(args, st).get
       }
-
-      println(s"created genMap for ${overloadsMap.size} overloads");
-
       SpecializedFuncs(
         Map(FUNC_DECL_INSTANT -> newGo),
       )
