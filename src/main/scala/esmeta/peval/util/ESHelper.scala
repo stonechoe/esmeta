@@ -95,8 +95,8 @@ object ESFuncModeling {
     funcBody: Ast,
     thisMode: Option[Enum],
     strict: Option[Boolean],
+    decl: Ast,
     private val astType: FuncLikes,
-    private val decl: Ast,
   ) {
     def toRecordEntries: List[(String, Predict[Value])] = List(
       FORMAL_PARAMS -> Known(AstValue(this.params)),

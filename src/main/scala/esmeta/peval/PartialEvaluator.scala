@@ -20,7 +20,6 @@ import esmeta.util.SystemUtils.*
 import java.io.PrintWriter
 import java.math.MathContext.DECIMAL128
 import scala.annotation.tailrec
-import scala.collection.immutable.HashMap
 import scala.collection.mutable.{Map as MMap, Set as MSet}
 import scala.math.{BigInt as SBigInt}
 import scala.util.{Try, Success}

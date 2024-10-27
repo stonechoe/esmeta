@@ -31,11 +31,11 @@ object AstHelper {
   val getPEvalTargetAsts = (rootAst: Ast) =>
     import ESHelper.*
     // XXX : edit this to get all function declarations
-    val asts = getAllChildrenByNames(rootAst, Set(ESHelper.FUNC_DECL))
+    val asts = getAllChildrenByNames(
+      rootAst,
+      Set(ESHelper.FUNC_DECL, ESHelper.FUNC_EXPR),
+    )
     asts.map((decl) => ESFuncAst.from(decl))
-
-  val getFuncDeclLikes = (ast: Ast) =>
-    getAllChildrenByNames(ast, ESHelper.FuncLikes.valueSet)
 
   def getAllChildrenByName(ast: Ast, name: String): List[Ast] =
     getAllChildrenByNames(ast, Set(name))

@@ -18,7 +18,7 @@ object CFGBuilder:
   def byIncremental(
     from: CFG,
     newFs: List[IRFunc],
-    sfMap: SpecializedFuncs,
+    newSfMap: SpecializedFuncs,
     log: Boolean = false,
   ): Option[CFG] = for {
     fromBuilder <- from.cfgBuilder
@@ -56,14 +56,14 @@ object CFGBuilder:
 
     cfg.program = program
     cfg.sfMap = from.sfMap match
-      case None => Some(sfMap)
+      case None => Some(newSfMap)
       case Some(oldSfMap) =>
         Some(SpecializedFuncs((for {
-          k <- oldSfMap.map.keys ++ sfMap.map.keys
+          funcName <- oldSfMap.map.keys ++ newSfMap.map.keys
         } yield {
-          val oldF = oldSfMap.map.getOrElse(k, PartialFunction.empty)
-          val newF = sfMap.map.getOrElse(k, PartialFunction.empty)
-          k -> newF.orElse(oldF)
+          val oldF = oldSfMap.map.getOrElse(funcName, PartialFunction.empty)
+          val newF = newSfMap.map.getOrElse(funcName, PartialFunction.empty)
+          funcName -> newF.orElse(oldF)
         }).toMap))
     cfg.cfgBuilder = Some(builder)
     cfg

@@ -46,16 +46,21 @@ case class Test262(
   /** basic harness files */
   lazy val basicHarness = getHarness("assert.js")() ++ getHarness("sta.js")()
 
-  lazy val allHarness = (for {
-    file <- walkTree(s"$TEST262_TEST_DIR/harness")
-    if file.isFile
-    harness <- parseFile(file.toString).flattenStmt
-  } yield harness)
+  lazy val allHarness =
+    val harness =
+      (
+        for {
+          file <- (walkTree(s"$TEST262_DIR/harness") ++
+          walkTree(s"$TEST262_TEST_DIR/harness"));
+          if file.isFile && jsFilter(file.getName)
+          hs <- Try { parseFile(file.toString) }.toOption.map(_.flattenStmt)
+        } yield hs
+      ).flatten.toList
+    mergeStmt(harness)
 
   lazy val cfgWithPEvaledHarness =
     val allDecls = for {
-      harness <- allHarness
-      decl <- AstHelper.getPEvalTargetAsts(harness)
+      decl <- AstHelper.getPEvalTargetAsts(allHarness)
     } yield decl
     {
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
@@ -80,15 +85,15 @@ case class Test262(
             case Failure(exception) => throw exception
       }.toList
 
-      // why no log option ???
-      if (true) then
-        for ((f, _) <- overloads) {
-          val pevalPw = getPrintWriter(
-            s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
-          )
-          pevalPw.println(f)
-          pevalPw.close
-        }
+      // TODO add log option...
+      // if (true) then
+      //   for ((f, fd) <- overloads) {
+      //     val pevalPw = getPrintWriter(
+      //       s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
+      //     )
+      //     pevalPw.println(f)
+      //     pevalPw.close
+      //   }
 
       val sfMap =
         PartialEvaluator.ForECMAScript.genMap(overloads)
@@ -375,9 +380,7 @@ case class Test262(
           val newCfg =
             CFGBuilder
               .byIncremental(
-                if (peval.shouldUseHarness) then
-                  println("we got here")
-                  cfgWithPEvaledHarness
+                if (peval.shouldUseHarness) then cfgWithPEvaledHarness
                 else cfg,
                 overloads.map(_._1),
                 sfMap,
