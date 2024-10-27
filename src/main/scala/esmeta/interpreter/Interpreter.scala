@@ -28,6 +28,7 @@ class Interpreter(
   val logPW: Option[PrintWriter] = None,
   val timeLimit: Option[Int] = None,
   val useOverload: Boolean = true,
+  val summary: Boolean = false,
 ) {
   import Interpreter.*
 
@@ -35,6 +36,12 @@ class Interpreter(
   lazy val result: State = timeout(
     {
       while (step) {}
+      if (summary) then
+        val summaryPW = getPrintWriter(s"$EVAL_LOG_DIR/summary")
+        summaryPW.println(
+          s"[Interpreter] summary: total iter count : ${iter}}",
+        )
+        summaryPW.close
       if (log)
         pw.println(st)
         pw.close
@@ -78,7 +85,10 @@ class Interpreter(
     case ExitCursor(func) =>
       st.callStack match
         case Nil =>
-          st.context.retVal.map((_, v) => st.globals += GLOBAL_RESULT -> v)
+          st.context.retVal.map((_, v) =>
+            st.globals += GLOBAL_RESULT -> v
+            st.globals += GLOBAL_RESULT_ITER_COUNT -> Math(iter),
+          )
           false
         case CallContext(ctxt, retId) :: rest =>
           val (ret, value) = st.context.retVal.getOrElse(throw NoReturnValue)
@@ -397,7 +407,6 @@ class Interpreter(
 
   /** itereration count */
   private var iter = 0
-  def getIter = iter
 
   /** logging */
   private lazy val pw: PrintWriter =
@@ -420,15 +429,9 @@ object Interpreter {
     useOverload: Boolean = true,
     summary: Boolean = false,
   ): State =
-    val itp = new Interpreter(st, log, detail, logPW, timeLimit, useOverload)
-    val ret = itp.result
-    if (summary) then
-      val summaryPW = getPrintWriter(s"$EVAL_LOG_DIR/summary")
-      summaryPW.println(
-        s"[Interpreter] summary: total iter count : ${itp.getIter}",
-      )
-      summaryPW.flush
-    ret
+    val itp =
+      new Interpreter(st, log, detail, logPW, timeLimit, useOverload, summary)
+    itp.result
 
   /** transition for lexical SDO */
   def eval(lex: Lexical, sdoName: String): Value = {
