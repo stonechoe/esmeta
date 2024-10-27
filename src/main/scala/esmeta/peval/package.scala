@@ -41,8 +41,4 @@ extension (sc: StringContext) {
   )
 }
 
-lazy val FORMAL_PARAMS = "FormalParameters"
-lazy val ECMASCRIPT_CODE = "ECMAScriptCode"
-lazy val FUNC_DECL = "FunctionDeclaration"
 lazy val FUNC_DECL_INSTANT = "FunctionDeclarationInstantiation"
-lazy val FUNC_BODY = "FunctionBody"

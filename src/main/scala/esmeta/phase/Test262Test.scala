@@ -16,6 +16,10 @@ import esmeta.test262.util.TestFilter
 import java.io.File
 import java.util.concurrent.TimeoutException
 
+// TODO sort imports
+import esmeta.peval.util.Test262PEvalStrategy
+import scala.util.{Try, Success, Failure}
+
 /** `test262-test` phase */
 case object Test262Test extends Phase[CFG, Summary] {
   val name = "test262-test"
@@ -26,7 +30,9 @@ case object Test262Test extends Phase[CFG, Summary] {
     config: Config,
   ): Summary =
 
-    if (config.coverage && config.peval) then
+    val pevalConfig = config.peval.getOrElse(Test262PEvalStrategy.Never);
+
+    if (config.coverage && !(pevalConfig.isNever)) then
       throw OptConflictError("-test262-test:coverage", "-test262-test:peval")
 
     // set test mode
@@ -56,7 +62,7 @@ case object Test262Test extends Phase[CFG, Summary] {
       config.coverage,
       config.timeLimit,
       config.concurrent,
-      config.peval,
+      pevalConfig,
     )
 
     // if summary has failed test case, throws an exception
@@ -118,7 +124,12 @@ case object Test262Test extends Phase[CFG, Summary] {
     ),
     (
       "peval",
-      BoolOption(_.peval = _),
+      StrOption((c, s) =>
+        c.peval = Try { Test262PEvalStrategy.from(s) } match {
+          case Success(v) => Some(v)
+          case Failure(_) => throw OptInvalidError(s, "test262-test")
+        },
+      ),
       "turn on partial evaluation. (not possible with `coverage` option)",
     ),
   )
@@ -132,6 +143,6 @@ case object Test262Test extends Phase[CFG, Summary] {
     var detail: Boolean = false,
     var concurrent: CP = CP.Single,
     var features: Option[List[String]] = None,
-    var peval: Boolean = false,
+    var peval: Option[Test262PEvalStrategy] = None,
   )
 }

@@ -2,6 +2,7 @@ package esmeta.test262
 
 import esmeta.*
 import esmeta.cfg.CFG
+import esmeta.cfgBuilder.CFGBuilder
 import esmeta.error.{NotSupported, InvalidExit, UnexpectedParseResult}
 import esmeta.error.NotSupported.*
 import esmeta.es.*
@@ -16,12 +17,9 @@ import esmeta.util.{ConcurrentPolicy => CP}
 import esmeta.util.SystemUtils.*
 import java.io.PrintWriter
 import java.util.concurrent.TimeoutException
-import esmeta.peval.util.AstHelper
-import esmeta.peval.FUNC_DECL_INSTANT
-import esmeta.peval.PartialEvaluator
+import esmeta.peval.{FUNC_DECL_INSTANT, PartialEvaluator}
+import esmeta.peval.util.{AstHelper, Test262PEvalStrategy}
 import scala.util.{Try, Success, Failure}
-import esmeta.cfgBuilder.CFGBuilder
-import cats.conversions.all
 
 /** data in Test262 */
 case class Test262(
@@ -166,7 +164,7 @@ case class Test262(
     useCoverage: Boolean = false,
     timeLimit: Option[Int] = None, // default: no limit
     concurrent: CP = CP.Single,
-    peval: Boolean = false,
+    peval: Test262PEvalStrategy = Test262PEvalStrategy.Never,
   ): Summary = {
     // extract tests from paths
     val tests: List[Test] = getTests(paths, features)
@@ -297,14 +295,14 @@ case class Test262(
     detail: Boolean = false,
     logPW: Option[PrintWriter] = None,
     timeLimit: Option[Int] = None,
-    peval: Boolean = false,
+    peval: Test262PEvalStrategy = Test262PEvalStrategy.Never,
   ): State =
     val (ast, fileAst) = loadTestAndAst(filename)
     val code = ast.toString(grammar = Some(cfg.grammar)).trim
     val st =
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
-      if (!peval) then defaultSetting
+      if (!peval.shouldCompute) then defaultSetting
       else {
         AstHelper.getPEvalTargetAsts(fileAst) match
           case Nil => defaultSetting
@@ -320,7 +318,8 @@ case class Test262(
                   simplifyLevel = 2,
                 )
 
-                // Ad-hoc fix : add 2048 to idx to avoid name conflict (it is okay to have conflict, its just shadowed - but performance drops)
+                // Ad-hoc fix : add 2048 to idx to avoid name conflict
+                // (it is okay to have conflict, its just shadowed - but performance drops)
                 val pevalResult = Try(
                   peval.run(
                     target,
@@ -336,6 +335,7 @@ case class Test262(
 
             val sfMap =
               PartialEvaluator.ForECMAScript.genMap(overloads)
+            // 'cfgWithPEvaledHarness' is computed
             val newCfg =
               CFGBuilder
                 .byIncremental(
@@ -345,7 +345,10 @@ case class Test262(
                 )
                 .getOrElse(???) // Cfg incremental build fail
 
-            Initialize(newCfg, code, Some(ast), Some(filename))
+            if (peval.shouldUse) then
+              Initialize(newCfg, code, Some(ast), Some(filename))
+            else Initialize(cfg, code, Some(ast), Some(filename))
+
       }
     Interpreter(
       st = st,

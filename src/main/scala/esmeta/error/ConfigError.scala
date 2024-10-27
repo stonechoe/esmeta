@@ -9,6 +9,9 @@ case class OptAlreadyExistError(name: String)
 case class OptConflictError(o1: String, o2: String)
   extends ConfigError(s"The option $o1 cannot be used with $o2.")
 
+case class OptInvalidError(o1: String, o2: String)
+  extends ConfigError(s"The option $o1 is invalid for option $o2.")
+
 case class NoChoiceError(msg: String)
   extends ConfigError(s"[NoChoiceError]: $msg")
 
