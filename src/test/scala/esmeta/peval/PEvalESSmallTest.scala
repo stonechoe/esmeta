@@ -24,13 +24,13 @@ class PEvalESSmallTest extends PEvalTest {
       val target = ESMetaTest.program.funcs
         .find(_.name == FUNC_DECL_INSTANT)
         .getOrElse(fail(s"target ${FUNC_DECL_INSTANT} not found in Program"))
-      val decls = AstHelper.getFuncDecls(ast)
+      val decls = AstHelper.getPEvalTargetAsts(ast)
 
       if !decls.isEmpty then {
 
         val overloads = decls.zipWithIndex.flatMap((fd, idx) =>
 
-          val (renamer, pst, params, body) =
+          val (renamer, pst) =
             PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
 
           val peval = PartialEvaluator(
@@ -47,7 +47,7 @@ class PEvalESSmallTest extends PEvalTest {
           ).map(_._1)
 
           pevalResult match
-            case Success(newFunc)   => Some((newFunc, params, body))
+            case Success(newFunc)   => Some((newFunc, fd))
             case Failure(exception) => fail(s"peval failed for FDI"), // None
         )
 
