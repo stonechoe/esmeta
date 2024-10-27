@@ -18,7 +18,7 @@ import esmeta.util.SystemUtils.*
 import java.io.PrintWriter
 import java.util.concurrent.TimeoutException
 import esmeta.peval.{FUNC_DECL_INSTANT, PartialEvaluator}
-import esmeta.peval.util.{AstHelper, Test262PEvalStrategy}
+import esmeta.peval.util.{AstHelper, Test262PEvalPolicy}
 import scala.util.{Try, Success, Failure}
 
 /** data in Test262 */
@@ -164,7 +164,7 @@ case class Test262(
     useCoverage: Boolean = false,
     timeLimit: Option[Int] = None, // default: no limit
     concurrent: CP = CP.Single,
-    peval: Test262PEvalStrategy = Test262PEvalStrategy.Never,
+    peval: Test262PEvalPolicy = Test262PEvalPolicy.Never,
   ): Summary = {
     // extract tests from paths
     val tests: List[Test] = getTests(paths, features)
@@ -295,7 +295,7 @@ case class Test262(
     detail: Boolean = false,
     logPW: Option[PrintWriter] = None,
     timeLimit: Option[Int] = None,
-    peval: Test262PEvalStrategy = Test262PEvalStrategy.Never,
+    peval: Test262PEvalPolicy = Test262PEvalPolicy.Never,
   ): State =
     val (ast, fileAst) = loadTestAndAst(filename)
     val code = ast.toString(grammar = Some(cfg.grammar)).trim

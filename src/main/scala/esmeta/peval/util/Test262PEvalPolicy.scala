@@ -3,7 +3,7 @@ package esmeta.peval.util
 import esmeta.error.{PEvalOptError}
 import scala.util.{Try, Success, Failure}
 
-enum Test262PEvalStrategy:
+enum Test262PEvalPolicy:
   case Never, ComputeOnly, ComputeAndUse
   // case ComputeAndSimplifyThenUse(simplifyLevel: Int)
 
@@ -19,14 +19,14 @@ enum Test262PEvalStrategy:
     case ComputeAndUse => true
     case _             => false
 
-object Test262PEvalStrategy:
-  def from(s: String): Test262PEvalStrategy = s match
+object Test262PEvalPolicy:
+  def from(s: String): Test262PEvalPolicy = s match
     case "never"           => Never
     case "compute-only"    => ComputeOnly
     case "compute-and-use" => ComputeAndUse
     // case "compute-and-simplify-then-use" => ComputeAndSimplifyThenUse(0)
     case _ => throw new PEvalOptError(s"Unknown PEval strategy: $s")
 
-  def fromOpt(s: String): Option[Test262PEvalStrategy] = Try { from(s) } match
+  def fromOpt(s: String): Option[Test262PEvalPolicy] = Try { from(s) } match
     case Success(v) => Some(v)
     case Failure(_) => None
