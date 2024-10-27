@@ -373,7 +373,7 @@ case class Test262(
 
           if (peval.shouldUseTarget) then
             Initialize(newCfg, code, Some(ast), Some(filename))
-          else if (peval.shouldComputeHarness) then
+          else if (peval.shouldUseHarness) then
             Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
           else defaultSetting
       }
