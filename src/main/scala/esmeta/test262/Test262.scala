@@ -303,12 +303,27 @@ case class Test262(
     val st =
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
-      if (!peval.shouldCompute) then defaultSetting
+      if (peval.isNever) then defaultSetting
       else {
-        AstHelper.getPEvalTargetAsts(fileAst) match
-          case Nil => defaultSetting
-          case decls =>
-            val overloads = decls.zipWithIndex.map {
+        if (!peval.shouldComputeTarget) then {
+          if (!peval.shouldComputeHarness) then
+            // this branch is not used
+            defaultSetting
+          else {
+            // peval.shouldComputeHarness is true
+            val _ = cfgWithPEvaledHarness // compute
+            // NOTE shouldUseTarget is false
+            if (peval.shouldUseHarness) then
+              Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
+            else defaultSetting
+          }
+        } else
+          // peval.shouldComputeTarget is true
+          if (peval.shouldComputeHarness) then
+            val _ = cfgWithPEvaledHarness // compute
+
+          val overloads =
+            AstHelper.getPEvalTargetAsts(fileAst).zipWithIndex.map {
               case (fd, idx) =>
                 val (renamer, pst) =
                   PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
@@ -334,31 +349,33 @@ case class Test262(
                   case Failure(exception) => throw exception
             }
 
-            if (log) then
-              for ((f, _) <- overloads) {
-                val pevalPw = getPrintWriter(
-                  s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
-                )
-                pevalPw.println(f)
-                pevalPw.close
-              }
+          if (log) then
+            for ((f, _) <- overloads) {
+              val pevalPw = getPrintWriter(
+                s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
+              )
+              pevalPw.println(f)
+              pevalPw.close
+            }
 
-            val sfMap =
-              PartialEvaluator.ForECMAScript.genMap(overloads)
-            // 'cfgWithPEvaledHarness' is computed
-            val newCfg =
-              CFGBuilder
-                .byIncremental(
-                  cfgWithPEvaledHarness,
-                  overloads.map(_._1),
-                  sfMap,
-                )
-                .getOrElse(???) // Cfg incremental build fail
+          val sfMap =
+            PartialEvaluator.ForECMAScript.genMap(overloads)
+          // 'cfgWithPEvaledHarness' is computed
+          val newCfg =
+            CFGBuilder
+              .byIncremental(
+                if (peval.shouldUseHarness) then cfgWithPEvaledHarness
+                else cfg,
+                overloads.map(_._1),
+                sfMap,
+              )
+              .getOrElse(???) // Cfg incremental build fail
 
-            if (peval.shouldUse) then
-              Initialize(newCfg, code, Some(ast), Some(filename))
-            else Initialize(cfg, code, Some(ast), Some(filename))
-
+          if (peval.shouldUseTarget) then
+            Initialize(newCfg, code, Some(ast), Some(filename))
+          else if (peval.shouldComputeHarness) then
+            Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
+          else defaultSetting
       }
     Interpreter(
       st = st,
