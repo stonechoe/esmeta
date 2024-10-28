@@ -24,6 +24,8 @@ import scala.collection.mutable.{Map as MMap, Set as MSet}
 import scala.math.{BigInt as SBigInt}
 import scala.util.{Try, Success}
 
+import scala.collection.immutable.HashMap
+
 /** extensible helper of IR interpreter with a CFG */
 class PartialEvaluator(
   val program: Program,
@@ -722,7 +724,7 @@ object PartialEvaluator {
 
       pst.allocRecord(
         addr_func_obj_record,
-        "ECMAScriptFunctionObject",
+        esFuncDecl.toRecordTname,
         esFuncDecl.toRecordEntries,
       )
 
@@ -740,10 +742,12 @@ object PartialEvaluator {
 
     def genMap(
       overloads: List[(Func, ESHelper.ESFuncAst)],
-    ): SpecializedFuncs = {
+    )(using msg: Option[String] = None): SpecializedFuncs = {
 
       // TODO : optimize finding matching overloads
-      val overloadsMap = Map.from(overloads.map {
+
+      // ???????
+      val overloadsMap = HashMap.from(overloads.map {
         case (ol, fa) =>
           (AstValue(fa.params), AstValue(fa.funcBody)) -> ol.name
       })
@@ -766,6 +770,9 @@ object PartialEvaluator {
                 case _                            => None
               }
             fname <- overloadsMap.get(asts)
+            // fname <- overloadsMap
+            // .find(elem => elem._1._1 == asts._1 && elem._1._2 == asts._2)
+            // .map(_._2)
           } yield fname
       // TODO : optimization ?
       val newGo: PartialFunction[(Iterable[Value], State), String] = {

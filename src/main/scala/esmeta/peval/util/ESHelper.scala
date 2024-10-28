@@ -98,6 +98,8 @@ object ESFuncModeling {
     decl: Ast,
     private val astType: FuncLikes,
   ) {
+    val toRecordTname: String = "ECMAScriptFunctionObject"
+
     def toRecordEntries: List[(String, Predict[Value])] = List(
       FORMAL_PARAMS -> Known(AstValue(this.params)),
       ECMASCRIPT_CODE -> Known(AstValue(this.funcBody)),

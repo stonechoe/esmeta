@@ -46,63 +46,48 @@ case class Test262(
   /** basic harness files */
   lazy val basicHarness = getHarness("assert.js")() ++ getHarness("sta.js")()
 
-  lazy val allHarness =
-    val harness =
-      (
-        for {
-          file <- (walkTree(s"$TEST262_DIR/harness") ++
-          walkTree(s"$TEST262_TEST_DIR/harness"));
-          if file.isFile && jsFilter(file.getName)
-          hs <- Try { parseFile(file.toString) }.toOption.map(_.flattenStmt)
-        } yield hs
-      ).flatten.toList
-    mergeStmt(harness)
+  lazy val allHarnesses =
+    val harnesses =
+      for {
+        file <- walkTree(s"$TEST262_DIR/harness") ++ walkTree(
+          s"$TEST262_TEST_DIR/harness",
+        );
+        if file.isFile && jsFilter(file.getName)
+        hs <- parseFile(file.toString).flattenStmt
+      } yield hs
+    harnesses.toList
 
-  lazy val cfgWithPEvaledHarness =
-    val allDecls = for {
-      decl <- AstHelper.getPEvalTargetAsts(allHarness)
-    } yield decl
-    {
-      val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
-      val overloads = allDecls.zipWithIndex.map {
-        case (fd, idx) =>
-          val (renamer, pst) =
-            PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
+  val cfgWithPEvaledHarness =
+    val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
+    val overloads = for {
+      (decl, idx) <- AstHelper
+        .getPEvalTargetAsts(mergeStmt(allHarnesses))
+        .zipWithIndex
+    } yield {
+      val (renamer, pst) =
+        PartialEvaluator.ForECMAScript.prepareForFDI(target, decl);
 
-          val peval = PartialEvaluator(
-            program = cfg.program,
-            renamer = renamer,
-            simplifyLevel = 2,
-          )
+      val peval = PartialEvaluator(
+        program = cfg.program,
+        renamer = renamer,
+        simplifyLevel = 2,
+      )
 
-          val pevalResult = Try(
-            peval.run(target, pst, Some(s"${target.name}PEvaled${idx}")),
-          ).map(_._1)
+      val pevalResult = Try(
+        peval.run(target, pst, Some(s"${target.name}PEvaled${idx}")),
+      ).map(_._1)
 
-          pevalResult match
-            case Success(newFunc) =>
-              (newFunc, fd)
-            case Failure(exception) => throw exception
-      }.toList
-
-      // TODO add log option...
-      // if (true) then
-      //   for ((f, fd) <- overloads) {
-      //     val pevalPw = getPrintWriter(
-      //       s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
-      //     )
-      //     pevalPw.println(f)
-      //     pevalPw.close
-      //   }
-
-      val sfMap =
-        PartialEvaluator.ForECMAScript.genMap(overloads)
-      val newCfg =
-        CFGBuilder
-          .byIncremental(cfg, overloads.map(_._1), sfMap)
-          .getOrElse(???) // Cfg incremental build fail
-      newCfg
+      pevalResult match
+        case Success(newF)      => (newF, decl)
+        case Failure(exception) => throw exception
     }
+
+    val sfMap = PartialEvaluator.ForECMAScript.genMap(overloads)(using
+      msg = Some("PEval harness called.."),
+    )
+    CFGBuilder
+      .byIncremental(cfg, overloads.map(_._1), sfMap)
+      .getOrElse(???) // Cfg incremental build fail
 
   /** specification */
   val spec = cfg.spec
@@ -316,23 +301,33 @@ case class Test262(
   ): State =
     val (ast, fileAst) = loadTestAndAst(filename)
     val code = ast.toString(grammar = Some(cfg.grammar)).trim
+
+    // /* test start */
+    // val harness = AstHelper.getPEvalTargetAsts(mergeStmt(allHarnesses))
+    // val testResult = harness.filter(fd =>
+    //   Try { AstHelper.getSubgraphPath(ast, fd.decl) }.isSuccess,
+    // )
+    // println(s"Test result: ${testResult.size} / ${harness.size}")
+    // println(
+    //   s"List : ${testResult.map(_.decl.toString(grammar = Some(cfg.grammar)) ++ "\n")}",
+    // )
+    // /* test end */
+
     val st =
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
       if (peval.isNever) then defaultSetting
       else {
         if (!peval.shouldComputeTarget) then {
-          if (!peval.shouldComputeHarness) then
-            // this branch is not used
-            defaultSetting
-          else {
-            // peval.shouldComputeHarness is true
-            val _ = cfgWithPEvaledHarness // compute
-            // NOTE shouldUseTarget is false
-            if (peval.shouldUseHarness) then
-              Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
-            else defaultSetting
+          {
+            if (peval.shouldComputeHarness) then
+              // peval.shouldComputeHarness is true
+              val _ = cfgWithPEvaledHarness // compute
           }
+          // NOTE shouldUseTarget is false
+          if (peval.shouldUseHarness) then
+            Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
+          else defaultSetting
         } else
           // peval.shouldComputeTarget is true
           if (peval.shouldComputeHarness) then
