@@ -131,6 +131,7 @@ lazy val test262EvalTest =
 
 // Java options for assembly
 lazy val assemblyJavaOpts = Seq(
+  "-Xss64m",
   "-Xms1g",
   "-Xmx3g",
   "-XX:ReservedCodeCacheSize=512m",
