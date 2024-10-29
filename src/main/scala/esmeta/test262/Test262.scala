@@ -49,9 +49,7 @@ case class Test262(
   lazy val allHarnesses =
     val harnesses =
       for {
-        file <- walkTree(s"$TEST262_DIR/harness") ++ walkTree(
-          s"$TEST262_TEST_DIR/harness",
-        );
+        file <- walkTree(s"$TEST262_DIR/harness")
         if file.isFile && jsFilter(file.getName)
         hs <- parseFile(file.toString).flattenStmt
       } yield hs
@@ -250,7 +248,10 @@ case class Test262(
 
     if (log && peval.harness.shouldCompute) then
       // TODO only log result of partial evaluation
-      for (f <- cfgWithPEvaledHarness.funcs) {
+      for {
+        f <- cfgWithPEvaledHarness.funcs
+        if f.name.contains("PEvaled") // ad-hoc fix
+      } {
         val pevalPw = getPrintWriter(
           s"$THIS_TEST_LOG_DIR/peval/${f.name}.ir",
         )
