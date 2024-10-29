@@ -47,7 +47,7 @@ case class StrOption[T](assign: (T, String) => Unit) extends OptionKind[T] {
   )
 }
 
-/** pre-defined finite string options */
+/** known string options */
 case class KnownStrOption[T](
   assign: (T, String) => Unit,
   strs: Set[String],
