@@ -169,7 +169,18 @@ case class Test262(
   ): Summary = {
 
     // log directory
-    val THIS_TEST_LOG_DIR = s"$TEST262TEST_LOG_DIR/eval-$dateStr"
+    var THIS_TEST_LOG_DIR = {
+      val firstPath = s"$TEST262TEST_LOG_DIR/eval-$dateStr"
+      if (!pathExists(firstPath)) then firstPath
+      else
+        LazyList
+          .from(1)
+          .map(_.toString)
+          .find(path =>
+            !pathExists(s"$TEST262TEST_LOG_DIR/eval-$dateStr-$path"),
+          )
+          .getOrElse(??? /* TODO use proper error */ )
+    }
 
     // extract tests from paths
     val tests: List[Test] = getTests(paths, features)
@@ -223,6 +234,7 @@ case class Test262(
               Some(logPW),
               timeLimit,
               peval,
+              logDir = THIS_TEST_LOG_DIR,
             )
           else cov.run(filename)
         val returnValue = st(GLOBAL_RESULT)
@@ -235,6 +247,16 @@ case class Test262(
 
     // close log file
     logPW.close()
+
+    if (log && peval.harness.shouldCompute) then
+      // TODO only log result of partial evaluation
+      for (f <- cfgWithPEvaledHarness.funcs) {
+        val pevalPw = getPrintWriter(
+          s"$THIS_TEST_LOG_DIR/peval/${f.name}.ir",
+        )
+        pevalPw.println(f)
+        pevalPw.close
+      }
 
     progressBar.summary
   }
@@ -304,6 +326,7 @@ case class Test262(
     logPW: Option[PrintWriter] = None,
     timeLimit: Option[Int] = None,
     peval: Test262PEvalPolicy = Test262PEvalPolicy.DEFAULT,
+    logDir: String, // = s"$TEST262TEST_LOG_DIR",
   ): State =
     val (ast, fileAst) = loadTestAndAst(filename)
     val code = ast.toString(grammar = Some(cfg.grammar)).trim
@@ -361,7 +384,7 @@ case class Test262(
           if (log) then
             for ((f, _) <- overloads) {
               val pevalPw = getPrintWriter(
-                s"$TEST262TEST_LOG_DIR/peval/${f.name}.ir",
+                s"$logDir/peval/${f.name}.ir",
               )
               pevalPw.println(f)
               pevalPw.close
