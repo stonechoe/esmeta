@@ -47,6 +47,24 @@ case class StrOption[T](assign: (T, String) => Unit) extends OptionKind[T] {
   )
 }
 
+/** pre-defined finite string options */
+case class KnownStrOption[T](
+  assign: (T, String) => Unit,
+  strs: Set[String],
+) extends OptionKind[T] {
+  def postfix: String = s"={${strs.mkString(", ")}}"
+  def argRegexList(name: String): List[ArgRegex[T]] = List(
+    (
+      ("-" + name + "=").r,
+      ".+".r,
+      (c, s) =>
+        if strs.contains(s) then assign(c, s) else throw NoStrArgError(name),
+    ),
+    (("-" + name + "=").r, ".*".r, (_, _) => throw NoStrArgError(name)),
+    (("-" + name).r, "".r, (_, _) => throw NoStrArgError(name)),
+  )
+}
+
 /** string list options */
 case class StrListOption[T](assign: (T, List[String]) => Unit)
   extends OptionKind[T] {

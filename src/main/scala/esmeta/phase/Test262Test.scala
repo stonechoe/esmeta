@@ -30,7 +30,7 @@ case object Test262Test extends Phase[CFG, Summary] {
     config: Config,
   ): Summary =
 
-    val pevalConfig = config.peval.getOrElse(Test262PEvalPolicy.Never);
+    val pevalConfig = config.peval.getOrElse(Test262PEvalPolicy.DEFAULT);
 
     if (config.coverage && !(pevalConfig.isNever)) then
       throw OptConflictError("-test262-test:coverage", "-test262-test:peval")
@@ -124,11 +124,15 @@ case object Test262Test extends Phase[CFG, Summary] {
     ),
     (
       "peval",
-      StrOption((c, s) =>
-        c.peval = Try { Test262PEvalPolicy.from(s) } match {
-          case Success(v) => Some(v)
-          case Failure(_) => throw OptInvalidError(s, "test262-test")
+      KnownStrOption(
+        (c, p) => {
+          c.peval = Some(
+            Test262PEvalPolicy
+              .parseOpt(p)
+              .getOrElse(throw OptInvalidError(p, "test262-test")),
+          )
         },
+        strs = Test262PEvalPolicy.values.map(_.toParsedString).toSet,
       ),
       "turn on partial evaluation. (not possible with `coverage` option)",
     ),

@@ -57,7 +57,7 @@ case class Test262(
       } yield hs
     harnesses.toList
 
-  val cfgWithPEvaledHarness =
+  lazy val cfgWithPEvaledHarness =
     val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
     val overloads = for {
       (decl, idx) <- AstHelper
@@ -165,8 +165,12 @@ case class Test262(
     useCoverage: Boolean = false,
     timeLimit: Option[Int] = None, // default: no limit
     concurrent: CP = CP.Single,
-    peval: Test262PEvalPolicy = Test262PEvalPolicy.Never,
+    peval: Test262PEvalPolicy = Test262PEvalPolicy.DEFAULT,
   ): Summary = {
+
+    // log directory
+    val THIS_TEST_LOG_DIR = s"$TEST262TEST_LOG_DIR/eval-$dateStr"
+
     // extract tests from paths
     val tests: List[Test] = getTests(paths, features)
 
@@ -177,7 +181,7 @@ case class Test262(
     val (targetTests, removed) = testFilter(tests, withYet)
 
     // open log file
-    val logPW = getPrintWriter(s"$TEST262TEST_LOG_DIR/log")
+    val logPW = getPrintWriter(s"$THIS_TEST_LOG_DIR/log")
 
     // get progress bar for extracted tests
     val progressBar = getProgressBar(
@@ -205,6 +209,7 @@ case class Test262(
       pw = logPW,
       postSummary = if (useCoverage) cov.toString else "",
       log = log && multiple,
+      logDir = THIS_TEST_LOG_DIR,
     )(
       // check final execution status of each Test262 test
       check = test =>
@@ -267,6 +272,7 @@ case class Test262(
       progressBar = progressBar,
       pw = logPW,
       log = log,
+      logDir = s"$TEST262TEST_LOG_DIR/parse-$dateStr",
     )(
       // check parsing result with its corresponding code
       check = test =>
@@ -297,7 +303,7 @@ case class Test262(
     detail: Boolean = false,
     logPW: Option[PrintWriter] = None,
     timeLimit: Option[Int] = None,
-    peval: Test262PEvalPolicy = Test262PEvalPolicy.Never,
+    peval: Test262PEvalPolicy = Test262PEvalPolicy.DEFAULT,
   ): State =
     val (ast, fileAst) = loadTestAndAst(filename)
     val code = ast.toString(grammar = Some(cfg.grammar)).trim
@@ -316,23 +322,15 @@ case class Test262(
     val st =
       val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
+      if (peval.harness.shouldCompute) then
+        val _ = cfgWithPEvaledHarness
       if (peval.isNever) then defaultSetting
       else {
-        if (!peval.shouldComputeTarget) then {
-          {
-            if (peval.shouldComputeHarness) then
-              // peval.shouldComputeHarness is true
-              val _ = cfgWithPEvaledHarness // compute
-          }
-          // NOTE shouldUseTarget is false
-          if (peval.shouldUseHarness) then
+        if (peval.individual.isNever /* && peval.harness.shouldCompute */ ) then {
+          if (peval.harness.shouldUse) then
             Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
           else defaultSetting
         } else
-          // peval.shouldComputeTarget is true
-          if (peval.shouldComputeHarness) then
-            val _ = cfgWithPEvaledHarness // compute
-
           val overloads =
             AstHelper.getPEvalTargetAsts(fileAst).zipWithIndex.map {
               case (fd, idx) =>
@@ -375,16 +373,16 @@ case class Test262(
           val newCfg =
             CFGBuilder
               .byIncremental(
-                if (peval.shouldUseHarness) then cfgWithPEvaledHarness
+                if (peval.harness.shouldUse) then cfgWithPEvaledHarness
                 else cfg,
                 overloads.map(_._1),
                 sfMap,
               )
               .getOrElse(???) // Cfg incremental build fail
 
-          if (peval.shouldUseTarget) then
+          if (peval.individual.shouldUse) then
             Initialize(newCfg, code, Some(ast), Some(filename))
-          else if (peval.shouldUseHarness) then
+          else if (peval.harness.shouldUse) then
             Initialize(cfgWithPEvaledHarness, code, Some(ast), Some(filename))
           else defaultSetting
       }
@@ -403,12 +401,12 @@ case class Test262(
     pw: PrintWriter,
     postSummary: => String = "",
     log: Boolean = false,
+    logDir: String,
   )(
     check: Test => T,
     postJob: String => Unit = _ => {},
   ): Unit =
     val summary: Summary = progressBar.summary
-    val logDir = s"$TEST262TEST_LOG_DIR/$name-$dateStr"
 
     // setting for logging
     if (log)
