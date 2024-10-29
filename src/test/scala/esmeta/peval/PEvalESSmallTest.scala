@@ -22,8 +22,10 @@ class PEvalESSmallTest extends PEvalTest {
 
       val ast = PEvalTest.scriptParser.fromFile(jsName)
       val target = ESMetaTest.program.funcs
-        .find(_.name == FUNC_DECL_INSTANT)
-        .getOrElse(fail(s"target ${FUNC_DECL_INSTANT} not found in Program"))
+        .find(_.name == ORDINARY_CALL_EVAL_BODY)
+        .getOrElse(
+          fail(s"target ${ORDINARY_CALL_EVAL_BODY} not found in Program"),
+        )
       val decls = AstHelper.getPEvalTargetAsts(ast)
 
       if !decls.isEmpty then {
@@ -31,7 +33,7 @@ class PEvalESSmallTest extends PEvalTest {
         val overloads = decls.zipWithIndex.flatMap((fd, idx) =>
 
           val (renamer, pst) =
-            PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
+            PartialEvaluator.ForECMAScript.prepareForOCEB(target, fd);
 
           val peval = PartialEvaluator(
             program = ESMetaTest.program,

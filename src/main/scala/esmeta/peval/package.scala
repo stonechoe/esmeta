@@ -41,4 +41,4 @@ extension (sc: StringContext) {
   )
 }
 
-lazy val FUNC_DECL_INSTANT = "FunctionDeclarationInstantiation"
+lazy val ORDINARY_CALL_EVAL_BODY = "OrdinaryCallEvaluateBody"

@@ -29,7 +29,7 @@ case object PEval extends Phase[Program, Program] {
   val name = "peval"
   val help = "partial-evaluate a pre-defined target AO using an ES file."
 
-  val TARGET_NAME = FUNC_DECL_INSTANT
+  val TARGET_NAME = ORDINARY_CALL_EVAL_BODY
 
   def apply(
     program: Program,
@@ -64,7 +64,7 @@ case object PEval extends Phase[Program, Program] {
     val overloads = fds.zipWithIndex.flatMap((fd, idx) =>
 
       val (renamer, pst) =
-        PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
+        PartialEvaluator.ForECMAScript.prepareForOCEB(target, fd);
 
       val peval = PartialEvaluator(
         program = program,

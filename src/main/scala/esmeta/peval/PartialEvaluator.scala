@@ -698,7 +698,7 @@ object PartialEvaluator {
 
   object ForECMAScript {
 
-    /** create new PState for p-evaluating `FunctionDeclarationInstantation`
+    /** create new PState for p-evaluating `OrdinaryCallEvaluateBody`
       *
       * @param func
       *   ir function, must be `FunctionDeclarationInstantation`.
@@ -707,14 +707,14 @@ object PartialEvaluator {
       * @return
       *   (renamer, pst, params: AstValue, funcBody : AstValue)
       */
-    def prepareForFDI(
+    def prepareForOCEB(
       func: Func,
       esFuncDecl: ESHelper.ESFuncAst,
     ) = {
 
-      if (func.name != FUNC_DECL_INSTANT) {
+      if (func.name != ORDINARY_CALL_EVAL_BODY) {
         throw PartialEvaluatorError(
-          s"`preparePst` is only callable with  ${FUNC_DECL_INSTANT}",
+          s"`prepareOCEB` is only callable with  ${ORDINARY_CALL_EVAL_BODY}",
         )
       }
 
@@ -729,7 +729,7 @@ object PartialEvaluator {
       )
 
       pst.define(
-        renamer.get(Name("func"), pst.context),
+        renamer.get(Name("F"), pst.context),
         Known(addr_func_obj_record),
       )
       pst.define(
@@ -788,7 +788,7 @@ object PartialEvaluator {
           go(args, st).get
       }
       SpecializedFuncs(
-        Map(FUNC_DECL_INSTANT -> newGo),
+        Map(ORDINARY_CALL_EVAL_BODY -> newGo),
       )
     }
 

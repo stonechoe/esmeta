@@ -17,7 +17,7 @@ import esmeta.util.{ConcurrentPolicy => CP}
 import esmeta.util.SystemUtils.*
 import java.io.PrintWriter
 import java.util.concurrent.TimeoutException
-import esmeta.peval.{FUNC_DECL_INSTANT, PartialEvaluator}
+import esmeta.peval.{ORDINARY_CALL_EVAL_BODY, PartialEvaluator}
 import esmeta.peval.util.{AstHelper, Test262PEvalPolicy}
 import scala.util.{Try, Success, Failure}
 
@@ -58,14 +58,14 @@ case class Test262(
     harnesses.toList
 
   lazy val cfgWithPEvaledHarness =
-    val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
+    val target = cfg.fnameMap.getOrElse(ORDINARY_CALL_EVAL_BODY, ???).irFunc
     val overloads = for {
       (decl, idx) <- AstHelper
         .getPEvalTargetAsts(mergeStmt(allHarnesses))
         .zipWithIndex
     } yield {
       val (renamer, pst) =
-        PartialEvaluator.ForECMAScript.prepareForFDI(target, decl);
+        PartialEvaluator.ForECMAScript.prepareForOCEB(target, decl);
 
       val peval = PartialEvaluator(
         program = cfg.program,
@@ -343,7 +343,7 @@ case class Test262(
     // /* test end */
 
     val st =
-      val target = cfg.fnameMap.getOrElse(FUNC_DECL_INSTANT, ???).irFunc
+      val target = cfg.fnameMap.getOrElse(ORDINARY_CALL_EVAL_BODY, ???).irFunc
       lazy val defaultSetting = Initialize(cfg, code, Some(ast), Some(filename))
       if (peval.harness.shouldCompute) then
         val _ = cfgWithPEvaledHarness
@@ -358,7 +358,7 @@ case class Test262(
             AstHelper.getPEvalTargetAsts(fileAst).zipWithIndex.map {
               case (fd, idx) =>
                 val (renamer, pst) =
-                  PartialEvaluator.ForECMAScript.prepareForFDI(target, fd);
+                  PartialEvaluator.ForECMAScript.prepareForOCEB(target, fd);
 
                 val peval = PartialEvaluator(
                   program = cfg.program,
