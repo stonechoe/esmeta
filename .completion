@@ -39,6 +39,158 @@ _esmeta_completions() {
   cmd="${COMP_WORDS[1]}"
   # completion for options
   case "${cur}" in
+    -extract:log=*)
+      COMPREPLY=($(compgen -W "-extract:log=true -extract:log=false"))
+      return 0
+      ;;
+    -extract:eval=*)
+      COMPREPLY=($(compgen -W "-extract:eval=true -extract:eval=false"))
+      return 0
+      ;;
+    -extract:repl=*)
+      COMPREPLY=($(compgen -W "-extract:repl=true -extract:repl=false"))
+      return 0
+      ;;
+    -compile:log=*)
+      COMPREPLY=($(compgen -W "-compile:log=true -compile:log=false"))
+      return 0
+      ;;
+    -compile:log-with-loc=*)
+      COMPREPLY=($(compgen -W "-compile:log-with-loc=true -compile:log-with-loc=false"))
+      return 0
+      ;;
+    -build-cfg:log=*)
+      COMPREPLY=($(compgen -W "-build-cfg:log=true -build-cfg:log=false"))
+      return 0
+      ;;
+    -build-cfg:dot=*)
+      COMPREPLY=($(compgen -W "-build-cfg:dot=true -build-cfg:dot=false"))
+      return 0
+      ;;
+    -build-cfg:pdf=*)
+      COMPREPLY=($(compgen -W "-build-cfg:pdf=true -build-cfg:pdf=false"))
+      return 0
+      ;;
+    -tycheck:repl=*)
+      COMPREPLY=($(compgen -W "-tycheck:repl=true -tycheck:repl=false"))
+      return 0
+      ;;
+    -tycheck:repl-continue=*)
+      COMPREPLY=($(compgen -W "-tycheck:repl-continue=true -tycheck:repl-continue=false"))
+      return 0
+      ;;
+    -tycheck:update-ignore=*)
+      COMPREPLY=($(compgen -W "-tycheck:update-ignore=true -tycheck:update-ignore=false"))
+      return 0
+      ;;
+    -tycheck:log=*)
+      COMPREPLY=($(compgen -W "-tycheck:log=true -tycheck:log=false"))
+      return 0
+      ;;
+    -tycheck:detail-log=*)
+      COMPREPLY=($(compgen -W "-tycheck:detail-log=true -tycheck:detail-log=false"))
+      return 0
+      ;;
+    -tycheck:type-sens=*)
+      COMPREPLY=($(compgen -W "-tycheck:type-sens=true -tycheck:type-sens=false"))
+      return 0
+      ;;
+    -tycheck:type-guard=*)
+      COMPREPLY=($(compgen -W "-tycheck:type-guard=true -tycheck:type-guard=false"))
+      return 0
+      ;;
+    -parse:debug=*)
+      COMPREPLY=($(compgen -W "-parse:debug=true -parse:debug=false"))
+      return 0
+      ;;
+    -eval:multiple=*)
+      COMPREPLY=($(compgen -W "-eval:multiple=true -eval:multiple=false"))
+      return 0
+      ;;
+    -eval:log=*)
+      COMPREPLY=($(compgen -W "-eval:log=true -eval:log=false"))
+      return 0
+      ;;
+    -eval:detail-log=*)
+      COMPREPLY=($(compgen -W "-eval:detail-log=true -eval:detail-log=false"))
+      return 0
+      ;;
+    -eval:no-overload=*)
+      COMPREPLY=($(compgen -W "-eval:no-overload=true -eval:no-overload=false"))
+      return 0
+      ;;
+    -eval:summary=*)
+      COMPREPLY=($(compgen -W "-eval:summary=true -eval:summary=false"))
+      return 0
+      ;;
+    -test262-test:progress=*)
+      COMPREPLY=($(compgen -W "-test262-test:progress=true -test262-test:progress=false"))
+      return 0
+      ;;
+    -test262-test:coverage=*)
+      COMPREPLY=($(compgen -W "-test262-test:coverage=true -test262-test:coverage=false"))
+      return 0
+      ;;
+    -test262-test:with-yet=*)
+      COMPREPLY=($(compgen -W "-test262-test:with-yet=true -test262-test:with-yet=false"))
+      return 0
+      ;;
+    -test262-test:log=*)
+      COMPREPLY=($(compgen -W "-test262-test:log=true -test262-test:log=false"))
+      return 0
+      ;;
+    -test262-test:detail-log=*)
+      COMPREPLY=($(compgen -W "-test262-test:detail-log=true -test262-test:detail-log=false"))
+      return 0
+      ;;
+    -test262-test:concurrent=*)
+      COMPREPLY=($(compgen -W "-test262-test:concurrent=true -test262-test:concurrent=false"))
+      return 0
+      ;;
+    -test262-test:peval=*)
+      COMPREPLY=($(compgen -W "-test262-test:peval=compute-never-false -test262-test:peval=never-never-false -test262-test:peval=compute-computeAndUse-true -test262-test:peval=never-compute-true -test262-test:peval=computeAndUse-computeAndUse-true -test262-test:peval=compute-never-true -test262-test:peval=computeAndUse-computeAndUse-false -test262-test:peval=computeAndUse-compute-false -test262-test:peval=compute-compute-false -test262-test:peval=computeAndUse-compute-true -test262-test:peval=computeAndUse-never-false -test262-test:peval=compute-compute-true -test262-test:peval=never-computeAndUse-true -test262-test:peval=never-computeAndUse-false -test262-test:peval=computeAndUse-never-true -test262-test:peval=never-compute-false -test262-test:peval=compute-computeAndUse-false -test262-test:peval=never-never-true"))
+      return 0
+      ;;
+    -inject:defs=*)
+      COMPREPLY=($(compgen -W "-inject:defs=true -inject:defs=false"))
+      return 0
+      ;;
+    -inject:log=*)
+      COMPREPLY=($(compgen -W "-inject:log=true -inject:log=false"))
+      return 0
+      ;;
+    -mutate:untilValid=*)
+      COMPREPLY=($(compgen -W "-mutate:untilValid=true -mutate:untilValid=false"))
+      return 0
+      ;;
+    -analyze:repl=*)
+      COMPREPLY=($(compgen -W "-analyze:repl=true -analyze:repl=false"))
+      return 0
+      ;;
+    -peval:log=*)
+      COMPREPLY=($(compgen -W "-peval:log=true -peval:log=false"))
+      return 0
+      ;;
+    -peval:detail-log=*)
+      COMPREPLY=($(compgen -W "-peval:detail-log=true -peval:detail-log=false"))
+      return 0
+      ;;
+    -ir-peval:log=*)
+      COMPREPLY=($(compgen -W "-ir-peval:log=true -ir-peval:log=false"))
+      return 0
+      ;;
+    -ir-peval:turn-on=*)
+      COMPREPLY=($(compgen -W "-ir-peval:turn-on=true -ir-peval:turn-on=false"))
+      return 0
+      ;;
+    -ir-eval:format=*)
+      COMPREPLY=($(compgen -W "-ir-eval:format=true -ir-eval:format=false"))
+      return 0
+      ;;
+    -ir-eval:log=*)
+      COMPREPLY=($(compgen -W "-ir-eval:log=true -ir-eval:log=false"))
+      return 0
+      ;;
     -*)
       case "${cmd}" in
         help)
