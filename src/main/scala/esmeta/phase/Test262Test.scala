@@ -124,7 +124,7 @@ case object Test262Test extends Phase[CFG, Summary] {
     ),
     (
       "peval",
-      KnownStrOption(
+      StrOption(
         (c, p) => {
           c.peval = Some(
             Test262PEvalPolicy
@@ -132,7 +132,7 @@ case object Test262Test extends Phase[CFG, Summary] {
               .getOrElse(throw OptInvalidError(p, "test262-test")),
           )
         },
-        strs = Test262PEvalPolicy.values.map(_.toParsedString).toSet,
+        prefer = Test262PEvalPolicy.values.map(_.toParsedString),
       ),
       "turn on partial evaluation. (not possible with `coverage` option)",
     ),

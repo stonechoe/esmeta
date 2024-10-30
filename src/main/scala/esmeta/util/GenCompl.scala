@@ -69,14 +69,10 @@ object GenCompl {
         for {
           phase <- phases
           (optName, opt, _) <- phase.options
-          optCompls <- (opt match
-            case BoolOption(_) =>
-              Some(phase.name, optName, List("true", "false"))
-            case NumOption(_) => None
-            case StrOption(_) => None
-            case KnownStrOption(_, strs) =>
-              Some(phase.name, optName, strs.toList)
-            case StrListOption(_) => None
+          optCompls <- (
+            opt.completions.isEmpty match
+              case true  => None
+              case false => Some(phase.name, optName, opt.completions)
           )
         } do {
           (app :> "").wrap(s"-${optCompls._1}:${optCompls._2}=*)", "") {
