@@ -143,10 +143,6 @@ _esmeta_completions() {
       COMPREPLY=($(compgen -W "-test262-test:detail-log=true -test262-test:detail-log=false"))
       return 0
       ;;
-    -test262-test:concurrent=*)
-      COMPREPLY=($(compgen -W "-test262-test:concurrent=true -test262-test:concurrent=false"))
-      return 0
-      ;;
     -test262-test:peval=*)
       COMPREPLY=($(compgen -W "-test262-test:peval=compute-never-false -test262-test:peval=never-never-false -test262-test:peval=compute-computeAndUse-true -test262-test:peval=never-compute-true -test262-test:peval=computeAndUse-computeAndUse-true -test262-test:peval=compute-never-true -test262-test:peval=computeAndUse-computeAndUse-false -test262-test:peval=computeAndUse-compute-false -test262-test:peval=compute-compute-false -test262-test:peval=computeAndUse-compute-true -test262-test:peval=computeAndUse-never-false -test262-test:peval=compute-compute-true -test262-test:peval=never-computeAndUse-true -test262-test:peval=never-computeAndUse-false -test262-test:peval=computeAndUse-never-true -test262-test:peval=never-compute-false -test262-test:peval=compute-computeAndUse-false -test262-test:peval=never-never-true"))
       return 0
