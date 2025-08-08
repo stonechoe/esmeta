@@ -22,7 +22,19 @@ case object BuildCFG extends Phase[Program, CFG] {
     val cfg = builder.result
 
     // logging mode
-    if (config.log) cfg.dumpTo(CFG_LOG_DIR)
+    if (config.log)
+      cfg.dumpTo(CFG_LOG_DIR)
+
+      val summary : List[(Int, List[Int])] = { (for {
+          nodes <- cfg.nodes
+        } yield 
+          nodes.id -> nodes.succs.map(_.id).toList.sorted).sortBy(_._1)
+      }
+      dumpJson(
+        summary,
+        s"$CFG_LOG_DIR/edges.json",
+        noSpace = true,
+      )
 
     // print DOT files
     if (config.dot)

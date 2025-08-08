@@ -10,6 +10,30 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v4
+      with:               
+                                                                                                                                   submodules: true                                                                           
+                              
+    - name: Setup JDK                              
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 21
+        cache: sbt
+
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1
+
+    - name: Run test
+      env:
+        ESMETA_HOME: ${{ github.workspace }}
+      run: sbt test262EvalTest
+  
+  cfg-alert:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -28,11 +52,13 @@ jobs:
         ESMETA_HOME: ${{ github.workspace }}
       run: sbt test262EvalTest
 
-    - name: Report Status
-      if: failure()
-      uses: 8398a7/action-slack@v3
+    - name: Send a stream message
+      uses: zulip/github-actions-zulip/send-message@v1
       with:
-        status: ${{ job.status }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        api-key: ${{ secrets.ZULIP_API_KEY }}
+        email: "username@example.com"
+        organization-url: "https://org.zulipchat.com"
+        to: "social"
+        type: "stream"
+        topic: "Castle"
+        content: "I come not, friends, to steal away your hearts."                 
